@@ -30,7 +30,7 @@ jobs:
         run: curl http://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf -o ${AREA}.osm.pbf
     
       - name: Build openmaptiles-compatible mbtiles files of given area
-      - uses: systemed/tilemaker@v2.2.0
+      - uses: systemed/tilemaker@v2.0.0
         with:
           # Required, same to --input
           input: ./${AREA}.osm.pbf
