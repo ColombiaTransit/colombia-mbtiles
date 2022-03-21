@@ -1,0 +1,39 @@
+# This is a basic workflow to help you get started with Actions
+
+name: generate-mbtiles
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch: 
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  generate:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: systemed/tilemaker@v2.0.0
+        with:
+          # Required, same to --input
+          input: /path/to/osm.pbf
+          # Required, same to --output. Could be a directory or a .mbtiles files
+          output: /path/to/output
+          # Optional, same to --config
+          # If not being set, default to resources/config-openmaptiles.config
+          config: /path/to/config
+          # Optional, same to --process
+          # If not being set, default to resources/process-openmaptiles.lua
+          process: /path/to/lua
+          # Optional, other arguments
+          # If not being set, default to '--verbose'
+          extra: --threads 0
