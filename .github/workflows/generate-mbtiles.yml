@@ -35,4 +35,10 @@ jobs:
           # Required, same to --input
           input: ${{ env.AREA }}.osm.pbf
           # Required, same to --output. Could be a directory or a .mbtiles files
-          output: ${{ env.AREA }}.mbtiles          
+          output: ${{ env.AREA }}.mbtiles         
+          
+      - name: Upload math result for job 1
+        uses: actions/upload-artifact@v3
+        with:
+           name: mbtiles-colombia
+           path: ${{ env.AREA }}.mbtiles
