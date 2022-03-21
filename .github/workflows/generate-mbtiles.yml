@@ -13,6 +13,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch: 
 
+env:
+  AREA: colombia
+  REGION: south-america
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -22,18 +26,22 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: systemed/tilemaker@v2.0.0
+      - name: Download PBF file
+        run: curl http://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf -o ${AREA}.osm.pbf
+    
+      - name: Build openmaptiles-compatible mbtiles files of given area
+      - uses: systemed/tilemaker@v2.2.0
         with:
           # Required, same to --input
-          input: /path/to/osm.pbf
+          input: ./${AREA}.osm.pbf
           # Required, same to --output. Could be a directory or a .mbtiles files
-          output: /path/to/output
+          output: ${AREA}-latest.mbtiles
           # Optional, same to --config
           # If not being set, default to resources/config-openmaptiles.config
-          config: /path/to/config
+          config: ./resources/config-openmaptiles.config
           # Optional, same to --process
           # If not being set, default to resources/process-openmaptiles.lua
-          process: /path/to/lua
+          process: ./resources/process-openmaptiles.lua
           # Optional, other arguments
           # If not being set, default to '--verbose'
           extra: --threads 0
