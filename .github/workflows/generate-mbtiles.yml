@@ -41,22 +41,28 @@ jobs:
       
       - name: Download ne_10m_antarctic_ice_shelves_polys
         run: |
-          mkdir -p landcover/ne_10m_antarctic_ice_shelves_polys
-          cd landcover/ne_10m_antarctic_ice_shelves_polys && wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_antarctic_ice_shelves_polys.zip -O ne_10m_antarctic_ice_shelves_polys.zip 
-          cd landcover/ne_10m_antarctic_ice_shelves_polys && unzip -o ne_10m_antarctic_ice_shelves_polys.zip
+          mkdir -p -v landcover/ne_10m_antarctic_ice_shelves_polys
+          cd landcover/ne_10m_antarctic_ice_shelves_polys
+          wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_antarctic_ice_shelves_polys.zip -O ne_10m_antarctic_ice_shelves_polys.zip 
+          unzip -o ne_10m_antarctic_ice_shelves_polys.zip
+          cd ../../
           
       - name: Download ne_10m_glaciated_areas
         run: |
-          mkdir -p landcover/ne_10m_glaciated_areas
-          cd landcover/ne_10m_glaciated_areas && wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_glaciated_areas.zip -O ne_10m_glaciated_areas.zip
-          cd landcover/ne_10m_glaciated_areas && unzip -o ne_10m_glaciated_areas.zip
+          mkdir -p -v landcover/ne_10m_glaciated_areas
+          cd landcover/ne_10m_glaciated_areas
+          wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_glaciated_areas.zip -O ne_10m_glaciated_areas.zip
+          unzip -o ne_10m_glaciated_areas.zip
+          cd ../../
       
       - name: Download water_polygons
         run: |
-          mkdir -p coastline
-          cd coastline && curl https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip -o water-polygons-split-4326.zip
-          cd coastline && unzip -o water-polygons-split-4326.zip
-          cd coastline && mv water-polygons-split-4326/* .
+          mkdir -p -v coastline
+          cd coastline
+          wget https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip -O water-polygons-split-4326.zip
+          unzip -o water-polygons-split-4326.zip
+          mv water-polygons-split-4326/* .
+          cd ../
     
       - name: Build openmaptiles-compatible mbtiles files of given area
         uses: systemed/tilemaker@v2.0.0
