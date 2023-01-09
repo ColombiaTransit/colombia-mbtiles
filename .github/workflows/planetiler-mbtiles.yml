@@ -46,7 +46,7 @@ jobs:
         id: timestamp
         env:
           TZ: Europe/Amsterdam
-        run: echo "timestamp=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
+        run: echo "timestamp=$(date +'Planetiles-%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
         
       - name: Release new graph
         uses: ncipollo/release-action@v1
