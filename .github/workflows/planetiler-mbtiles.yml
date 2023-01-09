@@ -42,8 +42,16 @@ jobs:
           ls -alh planetiler.jar | tee -a log
           cat log | strip-ansi > data/build-log.txt         
        
-      - name: Upload math result for job 1
-        uses: actions/upload-artifact@v3
+      - name: Get timestamp for release
+        id: timestamp
+        env:
+          TZ: Europe/Amsterdam
+        run: echo "timestamp=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
+        
+      - name: Release new graph
+        uses: ncipollo/release-action@v1
+        if: github.ref == 'refs/heads/main'
         with:
-           name: mbtiles-colombia
-           path: ./data/*.*
+          artifacts: data/colombia.mbtiles,data/build-log.txt
+          commit: graph-releases
+          tag: ${{ steps.timestamp.outputs.timestamp }}
