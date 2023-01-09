@@ -53,5 +53,4 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           artifacts: data/colombia.mbtiles,data/build-log.txt
-          commit: graph-releases
           tag: ${{ steps.timestamp.outputs.timestamp }}
