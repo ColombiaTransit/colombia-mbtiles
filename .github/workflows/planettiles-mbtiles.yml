@@ -4,7 +4,7 @@ on:
   schedule:
   - cron: 25 5 * * 1
 
-name: generate-mbtiles
+name: planetiler-mbtiles
 
 env:
   AREA: colombia
