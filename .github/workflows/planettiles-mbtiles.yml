@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: '14'
       - run: npm install -g strip-ansi-cli@3.0.2
-	  
+      
       - name: Download PlanetTiler
         run: |
           wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar -O planetiler.jar
