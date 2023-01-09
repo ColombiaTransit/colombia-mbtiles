@@ -4,7 +4,7 @@ on:
   schedule:
   - cron: 25 5 * * 1
 
-name: generate-mbtiles
+name: tilemaker-mbtiles
 
 env:
   AREA: colombia
@@ -65,8 +65,15 @@ jobs:
           # Required, same to --output. Could be a directory or a .mbtiles files
           output: ${{ env.AREA }}.mbtiles         
           
-      - name: Upload math result for job 1
-        uses: actions/upload-artifact@v3
+      - name: Get timestamp for release
+        id: timestamp
+        env:
+          TZ: Europe/Amsterdam
+        run: echo "timestamp=$(date +'Tilemaker-%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
+        
+      - name: Release new graph
+        uses: ncipollo/release-action@v1
+        if: github.ref == 'refs/heads/main'
         with:
-           name: mbtiles-colombia
-           path: ${{ env.AREA }}.mbtiles
+          artifacts: colombia.mbtiles
+          tag: ${{ steps.timestamp.outputs.timestamp }}
