@@ -1,0 +1,50 @@
+# This is a basic workflow to help you get started with Actions
+on:
+  workflow_dispatch: ~
+  schedule:
+  - cron: 25 5 * * 1
+
+name: generate-mbtiles
+
+env:
+  AREA: colombia
+  REGION: south-america
+  RAM: 2g
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  generate:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+	  - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          cache: 'maven'
+		  
+	  - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - run: npm install -g strip-ansi-cli@3.0.2
+	  
+    - name: Download PlanetTiler
+      run: |
+        wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar -O planetiler.jar
+    
+    - name: 'Build MBTiles'
+      run: |
+		    mkdir -p -v data
+        java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --mbtiles=data/colombia.mbtiles 2>&1 | tee log
+        ls -alh run.jar | tee -a log
+        cat log | strip-ansi > data/build-log.txt         
+       
+      - name: Upload math result for job 1
+        uses: actions/upload-artifact@v3
+        with:
+           name: mbtiles-colombia
+           path: ./data/*.*
