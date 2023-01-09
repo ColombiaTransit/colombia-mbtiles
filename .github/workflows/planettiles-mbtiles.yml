@@ -40,7 +40,7 @@ jobs:
         run: |
           mkdir -p -v data
           java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --mbtiles=data/colombia.mbtiles 2>&1 | tee log
-          ls -alh run.jar | tee -a log
+          ls -alh planetiler.jar | tee -a log
           cat log | strip-ansi > data/build-log.txt         
        
       - name: Upload math result for job 1
