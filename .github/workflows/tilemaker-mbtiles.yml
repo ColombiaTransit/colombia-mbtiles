@@ -58,7 +58,7 @@ jobs:
           cd ../
     
       - name: Build openmaptiles-compatible mbtiles files of given area
-        uses: systemed/tilemaker@v2.4.0
+        uses: systemed/tilemaker@v3.0.0
         with:
           # Required, same to --input
           input: ${{ env.AREA }}.osm.pbf
