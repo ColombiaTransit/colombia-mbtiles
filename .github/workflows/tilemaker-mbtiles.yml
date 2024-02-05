@@ -71,7 +71,7 @@ jobs:
           TZ: Europe/Amsterdam
         run: echo "timestamp=$(date +'Tilemaker-%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
         
-      - name: Release new graph
+      - name: Release new graph        
         uses: ncipollo/release-action@v1
         if: github.ref == 'refs/heads/main'
         with:
