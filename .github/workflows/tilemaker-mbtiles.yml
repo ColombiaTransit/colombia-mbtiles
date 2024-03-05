@@ -27,7 +27,7 @@ jobs:
           mkdir -p -v landcover/ne_10m_urban_areas
           cd landcover/ne_10m_urban_areas
           ls -l
-          wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_urban_areas.zip -O ne_10m_urban_areas.zip
+          wget https://naturalearth.s3.amazonaws.com/10m_cultural/ne_10m_urban_areas.zip -O ne_10m_urban_areas.zip
           ls -l
           unzip -o ne_10m_urban_areas.zip
           cd ../../
@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir -p -v landcover/ne_10m_antarctic_ice_shelves_polys
           cd landcover/ne_10m_antarctic_ice_shelves_polys
-          wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_antarctic_ice_shelves_polys.zip -O ne_10m_antarctic_ice_shelves_polys.zip 
+          wget https://naturalearth.s3.amazonaws.com/10m_physical/ne_10m_antarctic_ice_shelves_polys.zip -O ne_10m_antarctic_ice_shelves_polys.zip 
           unzip -o ne_10m_antarctic_ice_shelves_polys.zip
           cd ../../
           
@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p -v landcover/ne_10m_glaciated_areas
           cd landcover/ne_10m_glaciated_areas
-          wget https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_glaciated_areas.zip -O ne_10m_glaciated_areas.zip
+          wget https://naturalearth.s3.amazonaws.com/10m_physical/ne_10m_glaciated_areas.zip -O ne_10m_glaciated_areas.zip
           unzip -o ne_10m_glaciated_areas.zip
           cd ../../
       
