@@ -18,10 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        
+    steps:             
       - name: Download PBF file
         run: curl http://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf -o ${AREA}.osm.pbf
         
@@ -69,10 +66,10 @@ jobs:
           output: ${{ env.AREA }}.mbtiles  
           # Optional, same to --config
           # If not being set, default to resources/config-openmaptiles.json
-          #config: /github/workspace/resources/config-openmaptiles.json
+          config: ./resources/config-openmaptiles.json
           # Optional, same to --process
           # If not being set, default to resources/process-openmaptiles.json
-          #process: /github/workspace/resources/process-openmaptiles.lua
+          process: ./resources/process-openmaptiles.lua
           
       - name: Get timestamp for release
         id: timestamp
