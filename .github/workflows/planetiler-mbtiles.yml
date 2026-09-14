@@ -38,10 +38,18 @@ jobs:
       - name: 'Build MBTiles'
         run: |
           mkdir -p -v data
-          java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --mbtiles=data/colombia.mbtiles --download --minzoom=0 --maxzoom=14 --languages=en,es 2>&1 | tee log
+          java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --mbtiles=data/colombia.mbtiles --download --minzoom=0 --maxzoom=16 --languages=en,es 2>&1 | tee log
           ls -alh planetiler.jar | tee -a log
           cat log | strip-ansi > data/build-log.txt         
-       
+
+      - name: Verify mbtiles was created
+        run: |
+          if [ ! -s data/colombia.mbtiles ]; then
+            echo "::error::data/colombia.mbtiles is missing or empty — aborting release"
+            exit 1
+          fi
+          echo "mbtiles file present: $(du -h data/colombia.mbtiles | cut -f1)"
+      
       - name: Get timestamp for release
         id: timestamp
         env:
