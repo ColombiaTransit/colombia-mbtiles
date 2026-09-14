@@ -34,6 +34,13 @@ jobs:
       - name: Download PlanetTiler
         run: |
           wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar -O planetiler.jar
+
+      - name: Download OSM PBF
+        run: |
+          mkdir -p data/sources
+          curl -L --fail --retry 5 --retry-delay 15 --retry-all-errors \
+            -o data/sources/colombia.osm.pbf \
+            https://download.geofabrik.de/south-america/colombia-latest.osm.pbf
     
       - name: 'Build MBTiles'
         run: |
