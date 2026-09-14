@@ -9,7 +9,7 @@ name: planetiler-mbtiles
 env:
   AREA: colombia
   REGION: south-america
-  RAM: 2g
+  RAM: 4g
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -45,7 +45,7 @@ jobs:
       - name: 'Build MBTiles'
         run: |
           mkdir -p -v data
-          java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --mbtiles=data/colombia.mbtiles --download --minzoom=0 --maxzoom=16 --languages=en,es 2>&1 | tee log
+          java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --output=data/colombia.mbtiles --download --minzoom=0 --maxzoom=16 --languages=en,es 2>&1 | tee log
           ls -alh planetiler.jar | tee -a log
           cat log | strip-ansi > data/build-log.txt         
 
