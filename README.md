@@ -1,6 +1,14 @@
 # Colombia MBTiles Generator
 
-This is a bunch of github actions to help generate mbtiles files with [Tilemaker](https://github.com/systemed/tilemaker) and [Planetiler](https://github.com/onthegomap/planetiler)
+GitHub Action that builds an OpenMapTiles-compatible `colombia.mbtiles` every Monday with [Planetiler](https://github.com/onthegomap/planetiler).
+
+The latest build is always available at a fixed URL:
+
+```
+https://github.com/ColombiaTransit/colombia-mbtiles/releases/download/planetiler-latest/colombia.mbtiles
+```
+
+with a matching `colombia.mbtiles.sha256` next to it. It is served by [tileserver-docker](https://github.com/ColombiaTransit/tileserver-docker).
 
 ### Coverage
 - Covers Colombia
