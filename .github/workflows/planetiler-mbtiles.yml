@@ -153,23 +153,32 @@ jobs:
 
       - name: Publish rolling release
         if: github.ref == 'refs/heads/main'
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ env.LATEST_TAG }}
-          name: Colombia MBTiles (Planetiler, latest)
-          commit: ${{ github.sha }}
-          body: |
-            OpenMapTiles-schema vector tiles voor Colombia, gebouwd met Planetiler.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BUILT: ${{ steps.meta.outputs.built }}
+          OSM_DATE: ${{ steps.meta.outputs.osm_date }}
+          SIZE: ${{ steps.meta.outputs.size }}
+          TILES: ${{ steps.meta.outputs.tiles }}
+        run: |
+          cat > notes.md <<EOF
+          OpenMapTiles-schema vector tiles voor Colombia, gebouwd met Planetiler.
 
-            - Gebouwd: ${{ steps.meta.outputs.built }} (Europe/Amsterdam)
-            - OSM-data: ${{ steps.meta.outputs.osm_date }}
-            - Zoom: 0–${{ env.MAXZOOM }}
-            - Grootte: ${{ steps.meta.outputs.size }}, ${{ steps.meta.outputs.tiles }} tiles
+          - Gebouwd: ${BUILT} (Europe/Amsterdam)
+          - OSM-data: ${OSM_DATE}
+          - Zoom: 0–${MAXZOOM}
+          - Grootte: ${SIZE}, ${TILES} tiles
 
-            Vaste download-URL:
-            https://github.com/${{ github.repository }}/releases/download/${{ env.LATEST_TAG }}/${{ env.AREA }}.mbtiles
-          artifacts: data/${{ env.AREA }}.mbtiles,data/${{ env.AREA }}.mbtiles.sha256,data/build-log.txt
-          allowUpdates: true
-          removeArtifacts: true
-          replacesArtifacts: true
-          makeLatest: true
+          Vaste download-URL:
+          https://github.com/${GITHUB_REPOSITORY}/releases/download/${LATEST_TAG}/${AREA}.mbtiles
+          EOF
+
+          if gh release view "${LATEST_TAG}" >/dev/null 2>&1; then
+            gh release edit "${LATEST_TAG}" --notes-file notes.md --latest
+          else
+            gh release create "${LATEST_TAG}" --target "${GITHUB_SHA}" \
+              --title "Colombia MBTiles (Planetiler, latest)" \
+              --notes-file notes.md --latest
+          fi
+          gh release upload "${LATEST_TAG}" --clobber \
+            data/${AREA}.mbtiles data/${AREA}.mbtiles.sha256 data/build-log.txt
