@@ -22,6 +22,9 @@ env:
   MAXZOOM: 14
   # Vaste tag die altijd naar de nieuwste build wijst
   LATEST_TAG: planetiler-latest
+  # Water polygons: eigen mirror omdat osmdata.openstreetmap.de vaak plat ligt
+  WP_FILE: water-polygons-split-3857.zip
+  WP_MIRROR_TAG: sources-mirror
 
 jobs:
   generate:
@@ -46,6 +49,74 @@ jobs:
           curl -L --fail --retry 5 --retry-delay 15 --retry-all-errors \
             -o data/sources/${AREA}.osm.pbf \
             https://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf
+
+      # --- Water polygons ---------------------------------------------------
+      # osmdata.openstreetmap.de is regelmatig onbereikbaar. Volgorde:
+      #   1. Actions-cache van deze maand  -> klaar
+      #   2. Vers van osmdata              -> cache + mirror bijwerken
+      #   3. Oudere cache                  -> gebruiken
+      #   4. Eigen mirror (release-asset)  -> gebruiken
+      # Planetiler slaat bestaande bronbestanden over, dus doet zelf geen
+      # verzoek meer naar osmdata zodra het bestand er ligt.
+      - name: Month key
+        id: month
+        run: echo "month=$(date -u +%Y-%m)" >> $GITHUB_OUTPUT
+
+      - name: Restore water polygons cache
+        id: wp-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/sources/${{ env.WP_FILE }}
+          key: water-polygons-${{ steps.month.outputs.month }}
+          restore-keys: water-polygons-
+
+      - name: Fetch water polygons
+        id: wp
+        if: steps.wp-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          f=data/sources/${WP_FILE}
+          mkdir -p data/sources
+          if curl -fL --connect-timeout 30 --max-time 1800 \
+                  --retry 3 --retry-delay 30 --retry-all-errors \
+                  -o "$f.tmp" "https://osmdata.openstreetmap.de/download/${WP_FILE}" \
+             && unzip -tq "$f.tmp" >/dev/null; then
+            mv -f "$f.tmp" "$f"
+            echo "Vers gedownload van osmdata.openstreetmap.de"
+            echo "fresh=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          rm -f "$f.tmp"
+          echo "::warning::osmdata.openstreetmap.de onbereikbaar"
+          if [ -s "$f" ]; then
+            echo "Oudere versie uit de cache gebruikt"
+            exit 0
+          fi
+          echo "Mirror gebruikt (release ${WP_MIRROR_TAG})"
+          gh release download "${WP_MIRROR_TAG}" -R "${GITHUB_REPOSITORY}" \
+            -p "${WP_FILE}" -D data/sources --clobber
+          unzip -tq "$f" >/dev/null
+
+      - name: Save water polygons cache
+        if: steps.wp-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/sources/${{ env.WP_FILE }}
+          key: water-polygons-${{ steps.month.outputs.month }}
+
+      - name: Update water polygons mirror
+        if: steps.wp.outputs.fresh == 'true' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${WP_MIRROR_TAG}" -R "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "${WP_MIRROR_TAG}" -R "${GITHUB_REPOSITORY}" \
+              --title "Mirror: water polygons (osmdata.openstreetmap.de)" \
+              --notes "Kopie van ${WP_FILE} van https://osmdata.openstreetmap.de/ (ODbL, © OpenStreetMap-bijdragers). Fallback voor de Planetiler-build." \
+              --latest=false
+          gh release upload "${WP_MIRROR_TAG}" -R "${GITHUB_REPOSITORY}" \
+            "data/sources/${WP_FILE}" --clobber
 
       - name: Build MBTiles
         run: |
