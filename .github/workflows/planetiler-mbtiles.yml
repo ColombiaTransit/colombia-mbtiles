@@ -54,6 +54,7 @@ jobs:
             --area="${AREA}" \
             --output=data/${AREA}.mbtiles \
             --download \
+            --http-retries=5 --http-timeout=120s \
             --minzoom=0 --maxzoom=${MAXZOOM} \
             --languages=en,es \
             --force \
