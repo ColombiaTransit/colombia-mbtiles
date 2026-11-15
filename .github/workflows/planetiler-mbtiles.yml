@@ -1,71 +1,103 @@
-# This is a basic workflow to help you get started with Actions
+name: planetiler-mbtiles
+
 on:
   workflow_dispatch: ~
   schedule:
-  - cron: 25 5 * * 1
+    - cron: 25 5 * * 1
 
-name: planetiler-mbtiles
+# Nodig om releases aan te maken/bij te werken met GITHUB_TOKEN
+permissions:
+  contents: write
+
+# Nooit twee builds tegelijk die dezelfde release overschrijven
+concurrency:
+  group: planetiler-mbtiles
+  cancel-in-progress: false
 
 env:
   AREA: colombia
   REGION: south-america
   RAM: 4g
+  # OpenMapTiles-standaard; clients en tileserver-gl overzoomen vanaf 14
+  MAXZOOM: 14
+  # Vaste tag die altijd naar de nieuwste build wijst
+  LATEST_TAG: planetiler-latest
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   generate:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           java-version: 25
-          distribution: 'temurin'
-          
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-      - run: npm install -g strip-ansi-cli@4.0.0
-      
-      - name: Download PlanetTiler
+          distribution: temurin
+
+      - name: Download Planetiler
         run: |
-          wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar -O planetiler.jar
+          curl -L --fail --retry 5 --retry-delay 15 -o planetiler.jar \
+            https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
 
       - name: Download OSM PBF
         run: |
           mkdir -p data/sources
           curl -L --fail --retry 5 --retry-delay 15 --retry-all-errors \
-            -o data/sources/colombia.osm.pbf \
-            https://download.geofabrik.de/south-america/colombia-latest.osm.pbf
-    
-      - name: 'Build MBTiles'
-        run: |
-          mkdir -p -v data
-          java -Xms${{ env.RAM }} -Xmx${{ env.RAM }} -jar planetiler.jar --area="${{ env.AREA }}" --output=data/colombia.mbtiles --download --minzoom=0 --maxzoom=16 --languages=en,es 2>&1 | tee log
-          ls -alh planetiler.jar | tee -a log
-          cat log | strip-ansi > data/build-log.txt         
+            -o data/sources/${AREA}.osm.pbf \
+            https://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf
 
-      - name: Verify mbtiles was created
+      - name: Build MBTiles
         run: |
-          if [ ! -s data/colombia.mbtiles ]; then
-            echo "::error::data/colombia.mbtiles is missing or empty — aborting release"
+          set -o pipefail
+          java -Xms${RAM} -Xmx${RAM} -jar planetiler.jar \
+            --area="${AREA}" \
+            --output=data/${AREA}.mbtiles \
+            --download \
+            --minzoom=0 --maxzoom=${MAXZOOM} \
+            --languages=en,es \
+            --force \
+            2>&1 | sed -r 's/\x1B\[[0-9;]*[A-Za-z]//g' | tee data/build-log.txt
+
+      - name: Verify and checksum
+        id: meta
+        run: |
+          f=data/${AREA}.mbtiles
+          if [ ! -s "$f" ]; then
+            echo "::error::$f is missing or empty — aborting release"
             exit 1
           fi
-          echo "mbtiles file present: $(du -h data/colombia.mbtiles | cut -f1)"
-      
-      - name: Get timestamp for release
-        id: timestamp
-        env:
-          TZ: Europe/Amsterdam
-        run: echo "timestamp=$(date +'Planetiles-%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
-        
-      - name: Release new graph        
-        uses: ncipollo/release-action@v1
+          # Integriteitscheck van de SQLite-database
+          sqlite3 "$f" "PRAGMA quick_check;" | grep -qx ok
+          tiles=$(sqlite3 "$f" "SELECT count(*) FROM tiles;")
+          [ "$tiles" -gt 0 ] || { echo "::error::no tiles in $f"; exit 1; }
+
+          (cd data && sha256sum ${AREA}.mbtiles > ${AREA}.mbtiles.sha256)
+
+          echo "size=$(du -h "$f" | cut -f1)" >> $GITHUB_OUTPUT
+          echo "tiles=$tiles" >> $GITHUB_OUTPUT
+          echo "osm_date=$(curl -sL https://download.geofabrik.de/${REGION}/${AREA}-updates/state.txt | sed -n 's/^timestamp=//p' | sed 's/\\//g')" >> $GITHUB_OUTPUT
+          echo "built=$(TZ=Europe/Amsterdam date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Publish rolling release
         if: github.ref == 'refs/heads/main'
+        uses: ncipollo/release-action@v1
         with:
-          artifacts: data/colombia.mbtiles,data/build-log.txt
-          tag: ${{ steps.timestamp.outputs.timestamp }}
+          tag: ${{ env.LATEST_TAG }}
+          name: Colombia MBTiles (Planetiler, latest)
+          commit: ${{ github.sha }}
+          body: |
+            OpenMapTiles-schema vector tiles voor Colombia, gebouwd met Planetiler.
+
+            - Gebouwd: ${{ steps.meta.outputs.built }} (Europe/Amsterdam)
+            - OSM-data: ${{ steps.meta.outputs.osm_date }}
+            - Zoom: 0–${{ env.MAXZOOM }}
+            - Grootte: ${{ steps.meta.outputs.size }}, ${{ steps.meta.outputs.tiles }} tiles
+
+            Vaste download-URL:
+            https://github.com/${{ github.repository }}/releases/download/${{ env.LATEST_TAG }}/${{ env.AREA }}.mbtiles
+          artifacts: data/${{ env.AREA }}.mbtiles,data/${{ env.AREA }}.mbtiles.sha256,data/build-log.txt
+          allowUpdates: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          makeLatest: true
