@@ -47,19 +47,19 @@ jobs:
         run: |
           mkdir -p data/sources
           f=data/sources/${AREA}.osm.pbf
-          # Geofabrik weigert soms minutenlang verbindingen; daarom lang
-          # volhouden en daarna terugvallen op de openstreetmap.fr-mirror.
+          # Eén poging per server: lees de status en ga bij een fout direct
+          # door naar de volgende mirror in plaats van te blijven proberen.
           for url in \
             https://download.geofabrik.de/${REGION}/${AREA}-latest.osm.pbf \
             https://download.openstreetmap.fr/extracts/${REGION}/${AREA}-latest.osm.pbf
           do
-            if curl -L --fail --connect-timeout 30 \
-                 --retry 8 --retry-delay 60 --retry-all-errors \
-                 -o "$f" "$url"; then
+            code=$(curl -sSL --connect-timeout 20 -o "$f" -w '%{http_code}' "$url") || rc=$?
+            if [ "${rc:-0}" -eq 0 ] && [ "$code" = "200" ] && [ -s "$f" ]; then
               echo "PBF gedownload van $url"
               exit 0
             fi
-            echo "::warning::Download mislukt van $url"
+            echo "::warning::$url gaf HTTP ${code:-000} (curl exit ${rc:-0}), volgende mirror"
+            rm -f "$f"; unset rc
           done
           echo "::error::Geen PBF kunnen downloaden"
           exit 1
